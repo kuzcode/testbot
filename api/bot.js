@@ -1,15 +1,20 @@
-
-import { json } from 'micro';
-
-const TELEGRAM_TOKEN = '7553508410:AAFBpeltLRJRSIQ16te9UHLO2wppGCKiIaM'; // токен бота из переменных окружения
+const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const TELEGRAM_API = `https://api.telegram.org/bot${TELEGRAM_TOKEN}`;
 
 async function sendMessage(chat_id, text) {
-  await fetch(`${TELEGRAM_API}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id, text }),
-  });
+  try {
+    const res = await fetch(`${TELEGRAM_API}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id, text }),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      console.error('Telegram API error:', data);
+    }
+  } catch (e) {
+    console.error('Fetch error:', e);
+  }
 }
 
 export default async function handler(req, res) {
@@ -19,13 +24,13 @@ export default async function handler(req, res) {
   }
 
   const body = await json(req);
-  const message = body.message;
+  console.log('Incoming Telegram update:', body);
 
+  const message = body.message;
   if (message && message.text) {
     const chat_id = message.chat.id;
     const text = message.text;
 
-    // Например, отвечаем тем же текстом
     await sendMessage(chat_id, `Вы написали: ${text}`);
   }
 
